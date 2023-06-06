@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Additional test assertions for Ruby standard libraries."
   spec.description = spec.summary
   spec.homepage = "https://github.com/ruby/test-unit-ruby-core"
-  spec.license = "MIT"
+  spec.licenses = ["Ruby", "BSD-2-Clause"]
   spec.required_ruby_version = ">= 2.6.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
