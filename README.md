@@ -14,7 +14,7 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 Use `core_assertions` with `test/unit` as follows:
 
-```
+```ruby
 require "test/unit"
 require "core_assertions"
 
