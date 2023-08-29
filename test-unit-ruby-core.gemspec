@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "test-unit-ruby-core"
-  spec.version = "1.0.1"
+  spec.version = "1.0.2"
   spec.authors = ["Hiroshi SHIBATA", "Nobu Nakada"]
   spec.email = ["hsbt@ruby-lang.org", "nobu@ruby-lang.org"]
 
