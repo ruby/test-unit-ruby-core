@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "test-unit-ruby-core"
-  spec.version = "1.0.3"
+  spec.version = "1.0.4"
   spec.authors = ["Hiroshi SHIBATA", "Nobu Nakada"]
   spec.email = ["hsbt@ruby-lang.org", "nobu@ruby-lang.org"]
 
@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description = spec.summary
   spec.homepage = "https://github.com/ruby/test-unit-ruby-core"
   spec.licenses = ["Ruby", "BSD-2-Clause"]
-  spec.required_ruby_version = ">= 2.5"
+  spec.required_ruby_version = ">= 2.4"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
