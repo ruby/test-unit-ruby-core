@@ -21,4 +21,6 @@ Gem::Specification.new do |spec|
     lib/find_executable.rb
   ]
   spec.require_paths = ["lib"]
+
+  spec.add_runtime_dependency("test-unit")
 end
