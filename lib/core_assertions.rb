@@ -372,7 +372,8 @@ eom
         return unless defined?(Ractor)
 
         # https://bugs.ruby-lang.org/issues/21262
-        shim = "class Ractor; alias value take; end" if Ractor.method_defined?(:value)
+        shim_value = "class Ractor; alias value take; end" unless Ractor.method_defined?(:value)
+        shim_join = "class Ractor; alias join take; end" unless Ractor.method_defined?(:join)
 
         require = "require #{require.inspect}" if require
         if require_relative
@@ -382,7 +383,8 @@ eom
         end
 
         assert_separately(args, file, line, <<~RUBY, ignore_stderr: ignore_stderr, **opt)
-          #{shim}
+          #{shim_value}
+          #{shim_join}
           #{require}
           previous_verbose = $VERBOSE
           $VERBOSE = nil
