@@ -371,6 +371,9 @@ eom
       def assert_ractor(src, args: [], require: nil, require_relative: nil, file: nil, line: nil, ignore_stderr: nil, **opt)
         return unless defined?(Ractor)
 
+        # https://bugs.ruby-lang.org/issues/21262
+        shim = "class Ractor; alias value take; end" if Ractor.method_defined?(:value)
+
         require = "require #{require.inspect}" if require
         if require_relative
           dir = File.dirname(caller_locations[0,1][0].absolute_path)
@@ -379,6 +382,7 @@ eom
         end
 
         assert_separately(args, file, line, <<~RUBY, ignore_stderr: ignore_stderr, **opt)
+          #{shim}
           #{require}
           previous_verbose = $VERBOSE
           $VERBOSE = nil
