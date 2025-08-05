@@ -228,7 +228,7 @@ module EnvUtil
   end
   module_function :verbose_warning
 
-  if Warning.respond_to?(:[]=)
+  if defined?(Warning.[]=)
     def deprecation_warning
       previous_deprecated = Warning[:deprecated]
       Warning[:deprecated] = true
