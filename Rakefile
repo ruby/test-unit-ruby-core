@@ -7,4 +7,5 @@ task :sync_tool do
   FileUtils.cp "../ruby/tool/lib/core_assertions.rb", "./lib"
   FileUtils.cp "../ruby/tool/lib/envutil.rb", "./lib"
   FileUtils.cp "../ruby/tool/lib/find_executable.rb", "./lib"
+  FileUtils.cp "../ruby/tool/lib/memory_status.rb", "./lib"
 end

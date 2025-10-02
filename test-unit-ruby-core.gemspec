@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
     lib/core_assertions.rb
     lib/envutil.rb
     lib/find_executable.rb
+    lib/memory_status.rb
   ]
   spec.require_paths = ["lib"]
 
