@@ -225,7 +225,7 @@ module EnvUtil
 
     args = [args] if args.kind_of?(String)
     # use the same parser as current ruby
-    if args.none? { |arg| arg.start_with?("--parser=") }
+    if RUBY_VERSION >= "3.3" && args.none? { |arg| arg.start_with?("--parser=") }
       args = ["--parser=#{current_parser}"] + args
     end
     pid = spawn(child_env, *precommand, rubybin, *args, opt)
