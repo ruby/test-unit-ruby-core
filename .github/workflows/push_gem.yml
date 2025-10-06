@@ -15,7 +15,7 @@ jobs:
 
     environment:
       name: rubygems.org
-      url: https://rubygems.org/gems/date
+      url: https://rubygems.org/gems/test-unit-ruby-core
 
     permissions:
       contents: write
