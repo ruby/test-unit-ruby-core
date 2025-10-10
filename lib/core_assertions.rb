@@ -330,6 +330,13 @@ eom
         # power_assert 3 requires ruby 3.1 or later
         args << "-W:no-experimental" if RUBY_VERSION < "3.1."
         stdout, stderr, status = EnvUtil.invoke_ruby(args, src, capture_stdout, true, **opt)
+
+        if Test::Sanitizers.lsan_enabled?
+          # LSAN may output messages like the following line into stderr. We should ignore it.
+          #   ==276855==Running thread 276851 was not suspended. False leaks are possible.
+          # See https://github.com/google/sanitizers/issues/1479
+          stderr.gsub!(/==\d+==Running thread \d+ was not suspended\. False leaks are possible\.\n/, "")
+        end
       ensure
         if res_c
           res_c.close
