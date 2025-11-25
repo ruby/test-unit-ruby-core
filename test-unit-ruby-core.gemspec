@@ -23,5 +23,5 @@ Gem::Specification.new do |spec|
   ]
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency("test-unit")
+  spec.add_runtime_dependency("test-unit", ">= 3.7.2")
 end
