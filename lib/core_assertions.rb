@@ -34,6 +34,8 @@ module Test
 
   self.backtrace_filter = BacktraceFilter.new
 
+  Ractor.make_shareable(backtrace_filter) if defined?(Ractor.make_shareable)
+
   def self.filter_backtrace bt # :nodoc:
     backtrace_filter.filter bt
   end
@@ -299,7 +301,7 @@ module Test
         assert(status.success?, desc)
       end
 
-      ABORT_SIGNALS = Signal.list.values_at(*%w"ILL ABRT BUS SEGV TERM")
+      ABORT_SIGNALS = Signal.list.values_at(*%w"ILL ABRT BUS SEGV TERM").freeze
 
       def separated_runner(token, out = nil)
         include(*Test::Unit::TestCase.ancestors.select {|c| !c.is_a?(Class) })
@@ -311,16 +313,30 @@ module Test
         integer_to_s = Integer.instance_method(:to_s)
         array_pack = Array.instance_method(:pack)
         marshal_dump = Marshal.method(:dump)
-        assertions_ivar_set = Test::Unit::Assertions.method(:instance_variable_set)
         assertions_ivar_get = Test::Unit::Assertions.method(:instance_variable_get)
         Test::Unit::Assertions.module_eval do
           @_assertions = 0
 
+          # These need to be defined with def (not define_method with a
+          # Proc) so that they can be called from non-main Ractors, where
+          # instance variables of modules are not accessible; assertions
+          # made in non-main Ractors are counted separately and merged by
+          # assert_in_ractor instead.
           undef _assertions=
-          define_method(:_assertions=, ->(n) {assertions_ivar_set.call(:@_assertions, n)})
+          def _assertions=(n)
+            if !defined?(Ractor) || Ractor.main?
+              Test::Unit::Assertions.instance_variable_set(:@_assertions, n)
+            end
+          end
 
           undef _assertions
-          define_method(:_assertions, -> {assertions_ivar_get.call(:@_assertions)})
+          def _assertions
+            if !defined?(Ractor) || Ractor.main?
+              Test::Unit::Assertions.instance_variable_get(:@_assertions)
+            else
+              0
+            end
+          end
         end
         # assume Method#call and UnboundMethod#bind_call need to work as the original
 
@@ -448,6 +464,89 @@ eom
           $VERBOSE = previous_verbose
           #{src}
         RUBY
+      end
+
+      class RactorAssertionsHost
+        include Assertions
+        include CoreAssertions
+
+        def _assertions
+          @_assertions ||= 0
+        end
+
+        def _assertions=(n)
+          @_assertions = n
+        end
+      end
+
+      # A pending assert_in_ractor result; see assert_in_ractor(join: false).
+      class RactorAssertionsPending
+        attr_reader :ractor
+
+        def initialize(ractor, context, reported) # :nodoc:
+          @ractor = ractor
+          @context = context
+          @reported = reported
+        end
+
+        def value
+          result, assertions, error = @ractor.value
+          @context._assertions += assertions
+          if error
+            if @reported and Test::Unit::AssertionFailedError === error
+              # Already reported in full from inside the Ractor; raise
+              # only a pointer so the failure is not reported twice.
+              raise error.class, "assertion failed in assert_in_ractor Ractor (full report on stderr)", error.backtrace
+            end
+            raise error
+          end
+          result
+        end
+      end
+
+      # Runs the given block inside a Ractor in this process, and returns
+      # the block's value. Unlike a bare <tt>Ractor.new</tt>, the block
+      # is executed with the assertion methods available, and assertion
+      # failures, pend/omit/skip, and errors raised inside the Ractor are
+      # re-raised in the caller, so they are reported by the test framework
+      # as usual.
+      #
+      #   assert_in_ractor([1, 2]) do |ary|
+      #     assert_equal 2, ary.size
+      #   end
+      #
+      # With <tt>join: false</tt>, returns a RactorAssertionsPending
+      # instead of joining immediately, so the caller can coordinate with
+      # the running Ractor via its #ractor; call #value on it to join and
+      # collect the result.  If the block raises, the error is reported to
+      # stderr in full right away (since #value may never be reached), and
+      # #value raises only a pointer to that report.
+      def assert_in_ractor(*args, join: true, &block)
+        omit "Ractor is not supported" unless defined?(Ractor)
+        omit "Ractor.shareable_proc is not supported" unless Ractor.respond_to?(:shareable_proc)
+
+        block = Ractor.shareable_proc(&block)
+        ractor = Ractor.new(block, !join, args) do |block, report, args|
+          host = RactorAssertionsHost.new
+          begin
+            [host.instance_exec(*args, &block), host._assertions, nil]
+          rescue Exception => e
+            if report
+              # With join: false, #value may never be reached (e.g. the
+              # caller is blocked coordinating with this Ractor), so the
+              # error is reported here in full, and #value raises only a
+              # pointer to this report.
+              begin
+                $stderr.puts "assert_in_ractor Ractor failed:"
+                $stderr.puts e.full_message(highlight: false, order: :top)
+              rescue Exception
+              end
+            end
+            [nil, host._assertions, e]
+          end
+        end
+        pending = RactorAssertionsPending.new(ractor, self, !join)
+        join ? pending.value : pending
       end
 
       # :call-seq:
@@ -609,7 +708,7 @@ eom
         e
       end
 
-      TEST_DIR = File.join(__dir__, "test/unit") #:nodoc:
+      TEST_DIR = File.join(__dir__, "test/unit").freeze #:nodoc:
 
       # :call-seq:
       #   assert(test, [failure_message])
