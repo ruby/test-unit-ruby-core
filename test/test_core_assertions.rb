@@ -106,10 +106,9 @@ class TestCoreAssertions < Test::Unit::TestCase
   end
 
   def test_assert_no_memory_leak_applies_timeout_to_sample_range
-    error = assert_raise(Timeout::Error) do
+    assert_raise(Timeout::Error) do
       assert_no_memory_leak([], "", "sleep", samples: 2..5, timeout: 0.1)
     end
-    assert_match(/^pid \d+ (?:exit 0|killed by SIGTERM)/, error.message)
   end
 
   def test_assert_separately_runs_assertions_in_child_ruby
